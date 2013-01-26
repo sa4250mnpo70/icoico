@@ -1,4 +1,1 @@
-icoico
-======
-
-favicon generator
+Favicon generator.
