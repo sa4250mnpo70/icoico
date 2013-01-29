@@ -1,15 +1,37 @@
+// many thanks to Ilmari Heikkinen
+
+// for more information see http://en.wikipedia.org/wiki/ICO_(file_format)
+// an .ico file consists of header data, followed by ICONDIRENTRY data for
+// each icon image, then the data for each image
+
 var imagePath = "images/";
 var imageFiles = ["icon16.png", "icon22.png", "icon32.png", "icon48.png", "icon128.png"]
 
-loadImages(imageFiles, imagePath);
+initDataStream();
+loadImages();
+// createIcon() is called when all images have loaded
 
-var canvases = [];
+var ds;
+var headerLength;
+function initDataStream(){
+	ds = new DataStream();
+	ds.endianness = DataStream.LITTLE_ENDIAN;
+	ds.writeUint16(0); // reserved, must be 0
+	ds.writeUint16(1); // 1 means .ico (2 means .cur)
+	ds.writeUint16(imageFiles.length); // number of images
+
+	// header length is 6 + 16 * image_count bytes
+	headerLength = 6 + 16 * imageFiles.length; // *** is this right?
+}
+
 function loadImages(){
 	for (var i = 0; i != imageFiles.length; ++i){
 		loadImage(i);
 	}
 }
 
+var numLoaded = 0;
+var allImageData = "";
 function loadImage(i){
 	var image = new Image();
 	image.src = imagePath + imageFiles[i];
@@ -18,16 +40,40 @@ function loadImage(i){
 		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
 		context.drawImage(image, 0, 0);
-		document.body.appendChild(canvas);
-		canvases.push(canvas);
-		if (canvases.length === imageFiles.length) // doesn't account for errors, but...
-			imagesLoaded();
-	}
+		var imageData = atob(canvas.toDataURL('image/png').replace(/^[^,]+,/, ''));
+		allImageData += imageData;
 
+		// write ICONDIRENTRY data
+		ds.writeUint8(this.width); // width
+		ds.writeUint8(this.height); // height
+		ds.writeUint8(0); // not palette image: 0 if truecolor
+		ds.writeUint8(0); // reserved
+		ds.writeUint16(1); // color planes
+		ds.writeUint16(32); // bits per pixel
+		ds.writeUint32(imageData.length); // *** is this right?
+		ds.writeUint32(headerLength + allImageData.length); // *** is this right?
+
+		// image data is written to stream in createIcon(), after all ICONDIRENTRY data
+		allImageData += imageData; // *** is this right?
+
+		numLoaded += 1;
+		if (numLoaded === imageFiles.length) // doesn't account for errors, but...
+			createIcon();
+	}
 }
 
-function imagesLoaded(){
+function createIcon(){
 	console.log("Loaded! ");
+	console.log("ds:  ", ds);
+	ds.writeString(allImageData);
+	var ico = new Blob([ ds.buffer ]);
+	var url = window.URL.createObjectURL(ico);
+	var image = new Image();
+	document.body.appendChild(image);
+	image.src = url; // *** is this right?
+  var link = document.getElementById('favicon');
+  // data:image/vnd.microsoft.icon;base64,
+	link.href = url;
 }
 
 
@@ -68,10 +114,10 @@ var headerLength = 6 + 16 * 2;
 // first image
 ds.writeUint8(image1.width); // width
 ds.writeUint8(image1.height); // height
-ds.writeUint8(0); // not palette image
+ds.writeUint8(0); // not palette image: 0 if ?truecolor
 ds.writeUint8(0); // reserved
 ds.writeUint16(1); // color planes
-ds.writeUint16(32); // bits per pixel
+ds.writeUint16(32); // bits per pixel (32 = 24 color + 8 alpha)
 ds.writeUint32(imageData1.length);
 ds.writeUint32(headerLength);
 
@@ -91,5 +137,5 @@ ds.writeString(imageData2);
 
 var ico = new Blob([ ds.buffer ]);
 var url = window.URL.createObjectURL(ico);
-console.log(url);
+
 */

@@ -5,6 +5,8 @@
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
+<link id="favicon" rel="icon" type="image/x-icon" />
+
 <title>Favicon generator</title>
 
 <link rel="stylesheet" href="css/main.css" />
@@ -21,7 +23,12 @@
 
 <details>
   <summary>Huh?</summary>
-  <p>Built using the .</p>
+  <p>A favicon is built each time a new icon size is added:</p>
+  <ol>
+  <li>Create a canvas element.</li>
+  <li>Draw the icon image to the canvas context.</li>
+  <li>Get the canvas element's base 64 encoded image data with <code>getDataURL</code>, then use <code>atob() to decode</code> this</li>
+  </ol>
 </details>
 
 </div>
