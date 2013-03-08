@@ -41,7 +41,6 @@ function loadImage(i){
 		var context = canvas.getContext('2d');
 		context.drawImage(image, 0, 0);
 		var imageData = atob(canvas.toDataURL('image/png').replace(/^[^,]+,/, ''));
-		allImageData += imageData;
 
 		// write ICONDIRENTRY data
 		ds.writeUint8(this.width); // width
@@ -53,7 +52,7 @@ function loadImage(i){
 		ds.writeUint32(imageData.length); // *** is this right?
 		ds.writeUint32(headerLength + allImageData.length); // *** is this right?
 
-		// image data is written to stream in createIcon(), after all ICONDIRENTRY data
+		// image data will be written to stream in createIcon(), after all ICONDIRENTRY data
 		allImageData += imageData; // *** is this right?
 
 		numLoaded += 1;
@@ -63,17 +62,18 @@ function loadImage(i){
 }
 
 function createIcon(){
-	console.log("Loaded! ");
-	console.log("ds:  ", ds);
 	ds.writeString(allImageData);
 	var ico = new Blob([ ds.buffer ]);
 	var url = window.URL.createObjectURL(ico);
 	var image = new Image();
 	document.body.appendChild(image);
-	image.src = url; // *** is this right?
-  var link = document.getElementById('favicon');
+	image.src = url; // not surprisingly, this doesn't work :)
   // data:image/vnd.microsoft.icon;base64,
+	var link = document.createElement('link');
+	link.type = 'image/x-icon';
+	link.rel = 'shortcut icon';
 	link.href = url;
+	document.querySelector("head").appendChild(link);
 }
 
 
